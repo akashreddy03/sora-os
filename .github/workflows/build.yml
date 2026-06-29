@@ -20,4 +20,5 @@ jobs:
       run: cargo run -p xtask
       
     - name: List files recursively
+      if: always()
       run: find . -maxdepth 4 -not -path '*/.*'
