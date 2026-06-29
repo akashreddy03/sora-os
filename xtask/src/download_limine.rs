@@ -31,13 +31,14 @@ pub fn setup_limine() -> Result<(), Box<dyn std::error::Error>> {
     std::io::copy(&mut response.body_mut().as_reader(), &mut file)?;
 
     // 3. Extract and Build
+    println!("Extracting limine binary");
     fs::create_dir_all(BUILD_DIR)?;
     Command::new("tar").args(["-xf", tar_path.to_str().unwrap(), "-C", BUILD_DIR, "--strip-components=1"]).status()?;
 
     println!("Compiling Limine...");
     Command::new("make").current_dir(BUILD_DIR).status()?;
 
-    // 4. Copy required files to deps/limine
+    // 4. Copy required files to /limine
     fs::create_dir_all(DEST_DIR)?;
     for file in REQUIRED_FILES {
         let src = PathBuf::from(BUILD_DIR).join(file);

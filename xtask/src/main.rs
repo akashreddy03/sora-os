@@ -3,6 +3,14 @@ use std::process::Command;
 
 mod download_limine;
 
+const REQUIRED_FILES: &[&str] = &[
+    "limine/limine-bios.sys",
+    "limine/limine-bios-cd.bin",
+    "limine/limine-uefi-cd.bin",
+    "limine/BOOTX64.EFI",
+    "limine/BOOTIA32.EFI",
+];
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let root = std::env::current_dir()?;
     let iso_dir = root.join("target/iso_root");
@@ -30,28 +38,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     std::fs::copy(&kernel_bin, iso_dir.join("boot/sora.elf"))?;
     std::fs::copy(root.join("limine.conf"), iso_dir.join("boot/limine.conf"))?;
-    std::fs::copy(
-        root.join("limine/limine-bios.sys"),
-        iso_dir.join("boot/limine/limine-bios.sys"),
-    )?;
-    std::fs::copy(
-        root.join("limine/limine-bios-cd.bin"),
-        iso_dir.join("boot/limine/limine-bios-cd.bin"),
-    )?;
-    std::fs::copy(
-        root.join("limine/limine-uefi-cd.bin"),
-        iso_dir.join("boot/limine/limine-uefi-cd.bin"),
-    )?;
-    std::fs::copy(
-        root.join("limine/BOOTX64.EFI"),
-        iso_dir.join("EFI/BOOT/BOOTX64.EFI"),
-    )?;
-    std::fs::copy(
-        root.join("limine/BOOTIA32.EFI"),
-        iso_dir.join("EFI/BOOT/BOOTIA32.EFI"),
-    )?;
-
-
+    
+    for file in REQUIRED_FILES {
+        let src = root.join(file);
+        let dst = iso_dir.join("boot").join(file);
+        if src.exists() {
+            std::fs::copy(src, dst)?;
+        }
+    }
+    
     let iso_path = root.join("sora.iso");
     run_command(
         "xorriso",
