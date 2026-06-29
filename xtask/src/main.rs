@@ -1,7 +1,9 @@
 use anyhow::{Result, anyhow};
 use std::process::Command;
 
-fn main() -> Result<()> {
+mod download_limine;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let root = std::env::current_dir()?;
     let iso_dir = root.join("target/iso_root");
     let kernel_bin = root.join("target/x86_64-unknown-none/release/sora-os");
@@ -17,6 +19,8 @@ fn main() -> Result<()> {
             "x86_64-unknown-none",
         ],
     )?;
+
+    download_limine::setup_limine()?;
 
     if iso_dir.exists() {
         std::fs::remove_dir_all(&iso_dir)?;
