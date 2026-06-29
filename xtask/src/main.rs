@@ -42,8 +42,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for file in REQUIRED_FILES {
         let src = root.join(file);
         let dst = iso_dir.join("boot").join(file);
-        println!("{}", src.to_str().unwrap());
-        println!("{}", dst.to_str().unwrap());
         if src.exists() {
             std::fs::copy(src, dst)?;
         }

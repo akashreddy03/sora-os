@@ -26,8 +26,4 @@ jobs:
       run: which xorriso && xorriso --version
     
     - name: Build
-      run: cargo run -p xtask
-      
-    - name: List files recursively
-      if: always()
-      run: find . -maxdepth 4 -not -path '*/.*'
+      run: cargo run -p xtask 
