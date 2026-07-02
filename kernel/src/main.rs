@@ -1,11 +1,28 @@
 #![no_std]
 #![no_main]
+#![feature(custom_test_frameworks)]
+#![test_runner(test_runner)]
+#![reexport_test_harness_main = "test_main"]
 use core::panic::PanicInfo;
 use limine::BaseRevision;
 use limine::request::FramebufferRequest;
+mod serial;
 use core::fmt::Write;
 
-mod serial;
+#[cfg(test)]
+pub fn test_runner(tests: &[&dyn Fn()]) {
+    serial_println!("Running {} tests", tests.len());
+    for test in tests {
+        test();
+    }
+}
+
+#[test_case]
+fn simple_test() {
+    serial_println!("Simple Test...");
+    assert_eq!(1, 1);
+    serial_println!("[ok]");
+}
 
 static FONT: &[u8] = include_bytes!("../fonts/Lat2-Terminus16.psfu");
 
@@ -82,20 +99,22 @@ fn draw_string(framebuffer: *mut (), x:usize, y:usize, pitch: usize, string: &st
 pub extern "C" fn _start() -> ! {
     assert!(BaseRevision::is_supported(&BASE_REVISION));
 
-    let mut uart = serial::serial().lock();
+    serial_println!("hello World");
 
+    #[cfg(test)]
+    test_main();
+
+    serial_println!("end of program");
+
+    /* 
     if let Some(framebuffer_response) = FRAMEBUFFER_REQUEST.response() {
         if let Some(framebuffer) = framebuffer_response.framebuffers().first() {
-            writeln!(uart, "height: {}, width: {}, pitch: {}, bpp: {}, address: {:p} ", framebuffer.width, framebuffer.height, framebuffer.pitch, framebuffer.bpp, framebuffer.address()).unwrap();
-
-            for b in &FONT[..4] {
-                writeln!(uart, "{:02x} ", b).unwrap();
-            }
-
+            
             draw_string(framebuffer.address(), 10 as usize,10 as usize, framebuffer.pitch as usize, "Hello World!");
 
         }
-    }
+    }*/
+
     loop {}
 }
 

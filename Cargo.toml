@@ -1,5 +1,6 @@
 [workspace]
-members = ["kernel", "xtask"]
-resolver = "2"
+members = ["kernel"]
+exclude = ["xtask"]
+resolver = "3"
 
 

@@ -6,4 +6,4 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.103"
 ureq = "3.3.0"
-
+workspace_root = "0.2.0"

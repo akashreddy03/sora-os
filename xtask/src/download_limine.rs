@@ -1,9 +1,16 @@
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command;
+use workspace_root::get_workspace_root;
 
-const BUILD_DIR: &str = "target/limine-tmp";
-const DEST_DIR: &str = "limine";
+fn build_dir() -> PathBuf {
+    get_workspace_root().join("target/limine-tmp")
+}
+
+fn dest_dir() -> PathBuf {
+    get_workspace_root().join("limine")
+}
+
 const LIMINE_URL: &str = "https://github.com/limine-bootloader/limine/releases/latest/download/limine-binary.tar.gz";
 
 // Files to copy after running 'make'
@@ -18,38 +25,38 @@ const REQUIRED_FILES: &[&str] = &[
 
 pub fn setup_limine() -> Result<(), Box<dyn std::error::Error>> {
     // 1. Skip if already set up
-    if Path::new(DEST_DIR).exists() {
+    if dest_dir().exists() {
         return Ok(());
     }
 
     // 2. Download latest Limine source tarball
-    let tar_path = Path::new("target/limine.tar.gz");
+    let tar_path = get_workspace_root().join("target/limine.tar.gz");
     
     fs::create_dir_all("target")?;
     let mut response = ureq::get(LIMINE_URL).call()?;
-    let mut file = fs::File::create(tar_path)?;
+    let mut file = fs::File::create(&tar_path)?;
     std::io::copy(&mut response.body_mut().as_reader(), &mut file)?;
 
     // 3. Extract and Build
     println!("Extracting limine binary");
-    fs::create_dir_all(BUILD_DIR)?;
-    Command::new("tar").args(["-xf", tar_path.to_str().unwrap(), "-C", BUILD_DIR, "--strip-components=1"]).status()?;
+    fs::create_dir_all(build_dir())?;
+    Command::new("tar").args(["-xf"]).args([&tar_path]).args(["-C"]).args([&(build_dir())]).args(["--strip-components=1"]).status()?;
 
     println!("Compiling Limine...");
-    Command::new("make").current_dir(BUILD_DIR).status()?;
+    Command::new("make").current_dir(&build_dir()).status()?;
 
     // 4. Copy required files to /limine
-    fs::create_dir_all(DEST_DIR)?;
+    fs::create_dir_all(dest_dir())?;
     for file in REQUIRED_FILES {
-        let src = PathBuf::from(BUILD_DIR).join(file);
-        let dst = PathBuf::from(DEST_DIR).join(file);
+        let src = build_dir().join(file);
+        let dst = dest_dir().join(file);
         if src.exists() {
             fs::copy(src, dst)?;
         }
     }
 
     // 5. Cleanup
-    fs::remove_dir_all(BUILD_DIR)?;
+    fs::remove_dir_all(build_dir())?;
     fs::remove_file(tar_path)?;
     
     Ok(())

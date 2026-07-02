@@ -1,10 +1,10 @@
 # Temp Files
-/target
+target/
 
 # Built ISO Files
-/sora.iso
+sora.iso/
 
 # limine boot Files
-/limine
+limine/
 
 
