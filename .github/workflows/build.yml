@@ -25,5 +25,8 @@ jobs:
     - name: Verify xorriso
       run: which xorriso && xorriso --version
     
-    - name: Build
-      run: cargo run -p xtask 
+    - name: Build xtask
+      run: cargo build --bin xtask
+
+    - name: Build Kernel
+      run: cargo build --bin sora-os --target x86_64-unknown-none

@@ -3,4 +3,4 @@ target = "x86_64-unknown-none"
 
 [target.x86_64-unknown-none]
 rustflags = ["-C", "panic=abort"]
-runner = "xtask/target/debug/xtask run"
+runner = "../target/debug/xtask run"
