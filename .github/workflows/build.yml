@@ -17,6 +17,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Install cargo dependencies
+      run : |
+        rustup component add rustfmt
+        rustup component add clippy
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y qemu-system-x86 xorriso
+
     - name: Format check
       run: cargo fmt --check
 
@@ -25,11 +35,6 @@ jobs:
 
     - name: Lint check kernel
       run: cargo clippy -p sora-os --target x86_64-unknown-none
-
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y qemu-system-x86 xorriso
     
     - name: Build xtask
       run: cargo build --bin xtask
