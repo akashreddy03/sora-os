@@ -1,6 +1,9 @@
-use anyhow::{Result};
-use std::{path::PathBuf, process::Command};
 use crate::download_limine;
+use anyhow::Result;
+use std::{
+    path::PathBuf,
+    process::{Command, Stdio},
+};
 use workspace_root::get_workspace_root;
 
 const REQUIRED_FILES: &[&str] = &[
@@ -11,7 +14,7 @@ const REQUIRED_FILES: &[&str] = &[
     "limine/BOOTIA32.EFI",
 ];
 
-pub fn build(kernel_bin: Option<PathBuf> ) -> Result<(), Box<dyn std::error::Error>> {
+pub fn build(kernel_bin: Option<PathBuf>) -> Result<(), Box<dyn std::error::Error>> {
     let root = get_workspace_root();
     let iso_dir = root.join("target/iso_root");
 
@@ -29,7 +32,8 @@ pub fn build(kernel_bin: Option<PathBuf> ) -> Result<(), Box<dyn std::error::Err
                 "kernel/Cargo.toml",
                 "--target",
                 "x86_64-unknown-none",
-            ]).status()?;
+            ])
+            .status()?;
     } else {
         println!("Skipping build as binary is already provided.");
     }
@@ -44,7 +48,7 @@ pub fn build(kernel_bin: Option<PathBuf> ) -> Result<(), Box<dyn std::error::Err
 
     std::fs::copy(&kernel_bin, iso_dir.join("boot/sora.elf"))?;
     std::fs::copy(root.join("limine.conf"), iso_dir.join("boot/limine.conf"))?;
-    
+
     for file in REQUIRED_FILES {
         let src = root.join(file);
         let dst = iso_dir.join("boot").join(file);
@@ -68,15 +72,23 @@ pub fn build(kernel_bin: Option<PathBuf> ) -> Result<(), Box<dyn std::error::Err
             "/boot/limine/limine-uefi-cd.bin",
             "-efi-boot-part",
             "--efi-boot-image",
-            "--protective-msdos-label"])
-            .args([iso_dir])
-            .args(["-o"])
-            .args([&iso_path])
-            .status()?;
+            "--protective-msdos-label",
+        ])
+        .arg(iso_dir)
+        .arg("-o")
+        .arg(&iso_path)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()?;
 
     println!("Installing limine bios stages on kernel iso");
 
-    Command::new(root.join("limine/limine")).args(["bios-install"]).args([&iso_path]).status()?;
+    Command::new(root.join("limine/limine"))
+        .arg("bios-install")
+        .arg(&iso_path)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()?;
 
     println!("ISO successfully created at: {:?}", iso_path);
     Ok(())

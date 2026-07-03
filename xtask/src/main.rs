@@ -1,6 +1,6 @@
 mod build;
-mod run;
 mod download_limine;
+mod run;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -14,7 +14,3 @@ fn main() {
         }
     };
 }
-
-
-
-

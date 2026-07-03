@@ -17,16 +17,25 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install xorriso
+    - name: Format check
+      run: cargo fmt --check
+
+    - name: Lint check xtask
+      run: cargo clippy -p xtask
+
+    - name: Lint check kernel
+      run: cargo clippy -p sora-os --target x86_64-unknown-none
+
+    - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y xorriso
-
-    - name: Verify xorriso
-      run: which xorriso && xorriso --version
+        sudo apt-get install -y qemu-system-x86 xorriso
     
     - name: Build xtask
       run: cargo build --bin xtask
 
     - name: Build Kernel
       run: cargo build --bin sora-os --target x86_64-unknown-none
+
+    - name: Run tests
+      run: cargo test -p xtask --target x86_64-unknown-none
