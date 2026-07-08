@@ -3,9 +3,31 @@
 #![feature(custom_test_frameworks)]
 #![test_runner(crate::test_runner)]
 #![reexport_test_harness_main = "test_main"]
+#![feature(abi_x86_interrupt)]
 
 use core::panic::PanicInfo;
+
+extern crate alloc;
+
 pub mod serial;
+pub mod interrupts;
+pub mod gdt;
+pub mod memory;
+pub mod allocator;
+
+pub fn init() {
+    gdt::init();
+    interrupts::init_idt();
+    unsafe { interrupts::PICS.lock().initialize(); }
+    unsafe { interrupts::PICS.lock().write_masks(0xFC, 0xFF); }
+    x86_64::instructions::interrupts::enable();
+}
+
+pub fn hlt_loop() -> ! {
+    loop {
+        x86_64::instructions::hlt();
+    }
+}
 
 pub trait Testable {
     fn run(&self) -> ();
@@ -48,15 +70,16 @@ pub fn test_runner(tests: &[&dyn Testable]) {
 #[cfg(test)]
 #[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
+    init();
     test_main();
-    loop {}
+    hlt_loop();
 }
 
 pub fn test_panic_handler(info: &PanicInfo) -> ! {
     serial_println!("[failed]");
     serial_println!("{}", info);
     exit_qemu(QemuExitStatus::Failed);
-    loop {}
+    hlt_loop();
 }
 
 #[cfg(test)]
@@ -79,4 +102,9 @@ macro_rules! serial_println {
         $crate::serial::_print(format_args!($($arg)*));
         $crate::serial::_print(format_args!("\n"));
     }
+}
+
+#[test_case]
+fn test_breakpoint_exception() {
+    x86_64::instructions::interrupts::int3();
 }

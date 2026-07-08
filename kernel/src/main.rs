@@ -6,10 +6,11 @@
 
 use core::panic::PanicInfo;
 use limine::BaseRevision;
-use limine::request::FramebufferRequest;
-use sora_os::serial_println;
-#[cfg(test)]
-use sora_os::test_panic_handler;
+use limine::request::{ExecutableAddressRequest, FramebufferRequest, HhdmRequest, MemmapRequest};
+use sora_os::{allocator, serial_println};
+use x86_64::VirtAddr;
+
+extern crate alloc;
 
 #[test_case]
 fn simple_test() {
@@ -19,10 +20,24 @@ fn simple_test() {
 static FONT: &[u8] = include_bytes!("../fonts/Lat2-Terminus16.psfu");
 
 #[used]
+#[unsafe(link_section = ".requests")]
 static BASE_REVISION: BaseRevision = BaseRevision::new();
 
 #[used]
+#[unsafe(link_section = ".requests")]
 static FRAMEBUFFER_REQUEST: FramebufferRequest = FramebufferRequest::new();
+
+#[used]
+#[unsafe(link_section = ".requests")]
+static EXECUTABLE_ADDRESS_REQUEST: ExecutableAddressRequest = ExecutableAddressRequest::new();
+
+#[used]
+#[unsafe(link_section = ".requests")]
+static HHDM_REQUEST: HhdmRequest = HhdmRequest::new();
+
+#[used]
+#[unsafe(link_section = ".requests")]
+static MEMMAP_REQUEST: MemmapRequest = MemmapRequest::new();
 
 fn draw_pixel(framebuffer: *mut u8, x: usize, y: usize, pitch: usize, color: u32) {
     let offset = y * pitch + x * 4;
@@ -85,8 +100,20 @@ fn draw_string(framebuffer: *mut (), x: usize, y: usize, pitch: usize, string: &
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn _start() -> ! {
+extern "C" fn _start() -> ! {
     assert!(BaseRevision::is_supported(&BASE_REVISION));
+
+    let hhdm_address_response = HHDM_REQUEST.response().expect("HHDM Address is not passed by the bootloader.");
+    let memmap = MEMMAP_REQUEST.response().expect("Memmap is not passed by the bootloader");
+    let physical_memory_offset = VirtAddr::new(hhdm_address_response.offset);
+    
+    let mut mapper = unsafe { sora_os::memory::init(physical_memory_offset) };
+
+    let mut frame_allocator = unsafe { sora_os::memory::BootFrameAllocator::init(memmap.entries()) };
+
+    allocator::init_heap(&mut mapper, &mut frame_allocator).expect("Heap couldn't be initialized");
+
+    sora_os::init();
 
     serial_println!("hello World");
 
@@ -107,18 +134,18 @@ pub extern "C" fn _start() -> ! {
 
     serial_println!("end of program");
 
-    loop {}
+    sora_os::hlt_loop();
 }
 
 #[cfg(test)]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    test_panic_handler(info)
+    sora_os::test_panic_handler(info)
 }
 
 #[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     serial_println!("{}", info);
-    loop {}
+    sora_os::hlt_loop();
 }
