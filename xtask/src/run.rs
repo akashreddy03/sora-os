@@ -15,9 +15,14 @@ pub fn run(bin: Option<&String>) -> Result<(), Box<dyn std::error::Error>> {
             "stdio",
             "-device",
             "isa-debug-exit,iobase=0xf4,iosize=0x04",
+            "-M",
+            "acpi=off",
+            "-no-reboot"
         ]);
     if kernel_bin.contains("/deps/") {
         run_cmd.args(["-display", "none"]);
+    } else {
+        run_cmd.args(["-s", "-S", "-no-shutdown"]);
     }
     let status = run_cmd.status()?;
     let code = status.code().unwrap_or(1);
