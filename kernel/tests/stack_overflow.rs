@@ -49,8 +49,7 @@ pub extern "C" fn _start() -> ! {
 
     let mut mapper = unsafe { sora_os::memory::init(physical_memory_offset) };
 
-    let mut frame_allocator =
-        unsafe { sora_os::memory::BootFrameAllocator::init(memmap.entries()) };
+    let mut frame_allocator = sora_os::memory::BootFrameAllocator::init(memmap.entries());
 
     // Initalize all the components
     sora_os::init();

@@ -23,7 +23,7 @@ impl InterruptIndex {
 }
 
 pub static PICS: Mutex<ChainedPics> =
-    { Mutex::new(unsafe { ChainedPics::new(PIC_1_OFFSET, PIC_2_OFFSET) }) };
+    Mutex::new(unsafe { ChainedPics::new(PIC_1_OFFSET, PIC_2_OFFSET) });
 
 pub static IDT: LazyLock<InterruptDescriptorTable> = LazyLock::new(|| {
     let mut idt = InterruptDescriptorTable::new();
@@ -59,12 +59,12 @@ extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStac
 
     let mut keyboard = KEYBOARD.lock();
 
-    if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
-        if let Some(key) = keyboard.process_keyevent(key_event) {
-            match key {
-                pc_keyboard::DecodedKey::Unicode(character) => serial_print!("{}", character),
-                pc_keyboard::DecodedKey::RawKey(_key) => (),
-            }
+    if let Ok(Some(key_event)) = keyboard.add_byte(scancode)
+        && let Some(key) = keyboard.process_keyevent(key_event)
+    {
+        match key {
+            pc_keyboard::DecodedKey::Unicode(character) => serial_print!("{}", character),
+            pc_keyboard::DecodedKey::RawKey(_key) => (),
         }
     }
 

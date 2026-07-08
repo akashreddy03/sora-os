@@ -45,7 +45,7 @@ unsafe impl FrameAllocator<Size4KiB> for BootFrameAllocator {
 }
 
 impl BootFrameAllocator {
-    pub unsafe fn init(memmap: &[&Entry]) -> BootFrameAllocator {
+    pub fn init(memmap: &[&Entry]) -> BootFrameAllocator {
         let mut usable_mem_regions: [MemMapRegion; MAX_REGIONS] =
             [MemMapRegion { base: 0, length: 0 }; MAX_REGIONS];
         let mut count: usize = 0;
@@ -61,7 +61,7 @@ impl BootFrameAllocator {
         }
 
         BootFrameAllocator {
-            usable_mem_regions: usable_mem_regions,
+            usable_mem_regions,
             length_mem_regions: count,
             current_region: 0,
             next_phy_addr: PhysAddr::zero(),
@@ -69,6 +69,10 @@ impl BootFrameAllocator {
     }
 }
 
+/// # SAFETY
+///
+/// This function is unsafe because the caller must ensure the physical_memory_offset is correct.
+/// Otherwise this function might break memory safety.
 pub unsafe fn init(physical_memory_offset: VirtAddr) -> OffsetPageTable<'static> {
     unsafe {
         let level_4_table = active_level_4_table(physical_memory_offset);
