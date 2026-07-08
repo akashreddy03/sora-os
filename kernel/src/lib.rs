@@ -9,17 +9,21 @@ use core::panic::PanicInfo;
 
 extern crate alloc;
 
-pub mod serial;
-pub mod interrupts;
-pub mod gdt;
-pub mod memory;
 pub mod allocator;
+pub mod gdt;
+pub mod interrupts;
+pub mod memory;
+pub mod serial;
 
 pub fn init() {
     gdt::init();
     interrupts::init_idt();
-    unsafe { interrupts::PICS.lock().initialize(); }
-    unsafe { interrupts::PICS.lock().write_masks(0xFC, 0xFF); }
+    unsafe {
+        interrupts::PICS.lock().initialize();
+    }
+    unsafe {
+        interrupts::PICS.lock().write_masks(0xFC, 0xFF);
+    }
     x86_64::instructions::interrupts::enable();
 }
 

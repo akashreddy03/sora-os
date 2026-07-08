@@ -103,13 +103,18 @@ fn draw_string(framebuffer: *mut (), x: usize, y: usize, pitch: usize, string: &
 extern "C" fn _start() -> ! {
     assert!(BaseRevision::is_supported(&BASE_REVISION));
 
-    let hhdm_address_response = HHDM_REQUEST.response().expect("HHDM Address is not passed by the bootloader.");
-    let memmap = MEMMAP_REQUEST.response().expect("Memmap is not passed by the bootloader");
+    let hhdm_address_response = HHDM_REQUEST
+        .response()
+        .expect("HHDM Address is not passed by the bootloader.");
+    let memmap = MEMMAP_REQUEST
+        .response()
+        .expect("Memmap is not passed by the bootloader");
     let physical_memory_offset = VirtAddr::new(hhdm_address_response.offset);
-    
+
     let mut mapper = unsafe { sora_os::memory::init(physical_memory_offset) };
 
-    let mut frame_allocator = unsafe { sora_os::memory::BootFrameAllocator::init(memmap.entries()) };
+    let mut frame_allocator =
+        unsafe { sora_os::memory::BootFrameAllocator::init(memmap.entries()) };
 
     allocator::init_heap(&mut mapper, &mut frame_allocator).expect("Heap couldn't be initialized");
 

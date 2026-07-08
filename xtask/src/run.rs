@@ -17,7 +17,7 @@ pub fn run(bin: Option<&String>) -> Result<(), Box<dyn std::error::Error>> {
             "isa-debug-exit,iobase=0xf4,iosize=0x04",
             "-M",
             "acpi=off",
-            "-no-reboot"
+            "-no-reboot",
         ]);
     if kernel_bin.contains("/deps/") {
         run_cmd.args(["-display", "none"]);
